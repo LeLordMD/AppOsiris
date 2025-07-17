@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <div id="loading" style="display:none; text-align:center; margin-top:20px;">Chargement...</div>
+  <link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#b41616">
+
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(() => console.log('✅ Service Worker enregistré !'))
+      .catch((err) => console.error('❌ Erreur SW:', err));
+  }
+</script>
+<head>
+  <meta charset="UTF-8">
+  <title>SIS ROUSSILLON – Interface</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <style>
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body { font-family: Arial, sans-serif; background:#f5f5f5; color:#333; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+    .screen { width:100%; max-width:480px; padding:20px; display:none; flex-direction:column; }
+    .screen.active { display:flex; }
+    button.main-btn {
+  padding:15px;
+  margin:10px 0;
+  font-size:18px;
+  border:2px solid #b41616;
+  border-radius:8px;
+  background:transparent;
+  color:#b41616;
+  cursor:pointer;
+  transition:background .2s, color .2s, border .2s;
+  width:100%;
+}
+button.main-btn:hover {
+  background:#f5f5f5;
+  border-color:#b41616;
+}
+
+button.main-btn.red-btn {
+  background: #b41616;
+  color: #fff;
+  border: none;
+}
+button.main-btn.red-btn:hover {
+  opacity: 0.9;
+}
+
+    h1.title {
+      text-align:center; color:#b41616; margin-bottom:20px; font-size:20px;
+    }
+
+    .sub-buttons { display:flex; gap:10px; margin-bottom:20px; justify-content:center; }
+    .sub-buttons button {
+      flex:1; padding:10px; font-size:16px; border:1px solid #b41616; border-radius:8px;
+      background:#fff; color:#b41616; cursor:pointer; transition:background .2s;
+    }
+    .sub-buttons button.selected,
+    .sub-buttons button:hover { background:#b41616; color:#fff; }
+
+    .categorie { font-size:12px; text-transform:uppercase; text-decoration: underline; color:#999; margin:15px 0 5px; }
+    .button-container { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-start; }
+    .vehicule-btn {
+      padding:8px 14px; font-size:13px;
+      border:2px solid #333; border-radius:50px; color:#000;
+      background:#fff; white-space:nowrap;
+
+    .screen {
+  transition: opacity 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+.screen.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+    }
+    /* Firebase statut colors */
+    .statut-0 { background:#6cf46c; color:#000 }
+    .statut-1 { background:#1f801f; color:#000 }
+    .statut-2 { background:#f4d03f; color:#f00 }
+    .statut-3 { background:#e74c3c; color:#fff }
+    .statut-4 { background:#c0392b; color:#000 }
+    .statut-5 { background:#fff; color:#000 }
+    .statut-8 { background:#8e44ad; color:#000 }
+    .statut-11 { background:#000; color:#fff }
+    .statut-12 { background:#9b59b6; color:#000 }
+    /* Cat07 override for statut 0 */
+    .cat07 .statut-0 { background:#ccc !important; color:#000 !important; }
+
+    .back-btn {
+      margin-top:20px; align-self:flex-start;
+      background:none; border:none; color:#b41616; font-size:16px; cursor:pointer;
+    }
+  </style>
+</head>
+<body>
+
+ <body>
+
+  <!-- Indicateur de chargement -->
+  <div id="loading" style="display:none; text-align:center; margin-top:20px;">Chargement...</div>
+
+  <!-- Écran principal -->
+  <div id="home-screen" class="screen active">
+    <h1 class="title">SIS ROUSSILLON – Casernement</h1>
+    <button class="main-btn" onclick="showScreen('synoptique-screen')">Synoptique</button>
+    <button class="main-btn" onclick="showScreen('intervention')">Intervention</button>
+    <button class="main-btn" onclick="showScreen('personnel-screen')">Personnel</button>
+  </div>
+
+  <!-- Écran Synoptique -->
+  <div id="synoptique-screen" class="screen">
+    <h1 class="title">SIS ROUSSILLON - Synoptique des engins</h1>
+    <div class="sub-buttons">
+      <button id="btn-ron">RON</button>
+      <button id="btn-roc">ROC</button>
+    </div>
+    <div id="vehicules-container"></div>
+    <button class="back-btn" onclick="showScreen('home-screen')">← Retour</button>
+  </div>
+
+  <!-- Écran Intervention -->
+  <div id="intervention-screen" class="screen">
+    <h1 class="title">Interventions en cours</h1>
+    <p style="text-align:center; margin-top:30px; color:#666;">(à développer)</p>
+    <button class="back-btn" onclick="showScreen('home-screen')">← Retour</button>
+  </div>
+
+  <div id="personnel-screen" class="screen">
+  <h1 class="title">Personnel</h1>
+
+  <div class="categorie">GARDE</div>
+  <div id="garde-container" class="button-container"></div>
+
+  <div class="categorie">ASTREINTE</div>
+  <div class="button-container"><div class="vehicule-btn">Pas disponible</div></div>
+
+  <div class="categorie">REPOS</div>
+  <div id="repos-container" class="button-container"></div>
+
+  <button class="back-btn" onclick="showScreen('home-screen')">← Retour</button>
+</div>
+
+  <!-- Écran Fiche 18 -->
+<div id="fiche18-screen" class="screen">
+  <h1 class="title">Fiche 18 – Intervention Numérique</h1>
+  <iframe src="fiche18.html" style="width:100%; height:90vh; border:none;"></iframe>
+  <button class="back-btn" onclick="showScreen('home-screen')">← Retour</button>
+</div>
+
+</body>
+  <script>
+    // Firebase init
+    const firebaseConfig = {
+      apiKey: "AIzaSyB1GhGT7hLqmrErOiQRaA7A_T9E_UntNz4",
+      authDomain: "sis-osiris.firebaseapp.com",
+      databaseURL: "https://sis-osiris-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "sis-osiris",
+      storageBucket: "sis-osiris.firebasedestorage.app",
+      messagingSenderId: "671818242126",
+      appId: "1:671818242126:web:9ffc48ec96fdc69ff10b1f"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const data = {
+      RON: { path: "engins", vehicules: {
+        "01 - SECOURS A PERSONNE": ["AMBU 01"],
+        "02 - INCENDIE": ["VMR85 01","VMR110 01","VPCO 01"],
+        "03 - INTERVENTIONS DIVERSES": ["VL 01","VL 02","VLHR 01","VTU 01"],
+        "04 - SPECIALITES": ["CCE 01","VPCE 01"],
+        "06 - COMMANDEMENT": ["VPCA 01"],
+        "07 - CELLULES ET REMORQUES": ["CMIC 01","RCANP 01","RCOMP 01","RFUEL 01","RGELEC 01","RGMV 01","RGESIP 01","RFOREX 01"],
+      }},
+      ROC: { path: "enginsroches", vehicules: {
+        "01 - SECOURS A PERSONNE": ["AMBU 01"],
+        "02 - INCENDIE": ["FMOGP 01","VMR 01"],
+        "03 - INTERVENTIONS DIVERSES": ["VL 01","VL 02","VTU 01"],
+        "04 - SPECIALITES": ["VIC 01","VPCE 02","VPCE 01"],
+        "06 - COMMANDEMENT": ["VPCA 01"],
+        "07 - CELLULES ET REMORQUES": ["CCAIR 01","CPROTEC 01","CE30 01","CE20 01","CC02 01","CDA 01","CTRANSAID 01"],
+      }},
+    };
+
+function afficherPersonnel() {
+  const couleursEquipe = {
+    "ROUGE": "#e74c3c",
+    "BLEUE": "#3498db",
+    "VERTE": "#27ae60",
+    "JAUNE": "#f1c40f",
+    "ROSE": "#e91e63",
+  };
+
+  const planningParSemaine = [
+    ["J", "J", "N", "R", "R", "R", "R"], // S1
+    ["R", "R", "J", "N", "N", "R", "R"], // S2
+    ["R", "R", "R", "J", "J", "N", "N"], // S3
+    ["R", "R", "R", "R", "R", "J", "J"], // S4
+    ["N", "N", "R", "R", "R", "R", "R"]  // S5
+  ];
+
+  const equipes = [
+    { nom: "EQUIPE A - ROUGE", decalageSemaine: 4 },
+    { nom: "EQUIPE B - BLEUE", decalageSemaine: 3 },
+    { nom: "EQUIPE C - VERTE", decalageSemaine: 2 },
+    { nom: "EQUIPE D - JAUNE", decalageSemaine: 1 },
+    { nom: "EQUIPE E - ROSE", decalageSemaine: 0 },
+  ];
+
+  const gardeContainer = document.getElementById("garde-container");
+  const reposContainer = document.getElementById("repos-container");
+  gardeContainer.innerHTML = '';
+  reposContainer.innerHTML = '';
+
+  const maintenant = new Date();
+  const heure = maintenant.getHours();
+  const minutes = maintenant.getMinutes();
+
+  // Déterminer le créneau actuel : "J" ou "N"
+  const currentSlot = (heure > 6 || (heure === 6 && minutes >= 30)) && (heure < 18 || (heure === 18 && minutes < 30)) ? "J" : "N";
+
+  // Référence : lundi 14 juillet 2025 (S1 pour ROSE)
+  const referenceLundi = new Date("2025-07-14T00:00:00");
+  const joursEcoules = Math.floor((maintenant - referenceLundi) / (1000 * 60 * 60 * 24));
+
+  const jourSemaine = joursEcoules % 7; // 0 = lundi
+  const semaineDepuisRef = Math.floor(joursEcoules / 7);
+
+  equipes.forEach(eq => {
+    const semaineEquipe = (semaineDepuisRef + eq.decalageSemaine) % 5;
+    const statutJour = planningParSemaine[semaineEquipe][jourSemaine];
+
+    const div = document.createElement('div');
+    div.className = 'vehicule-btn';
+    div.textContent = eq.nom;
+
+    const [label, colorKey] = eq.nom.split(" - ");
+div.textContent = label; // affiche juste "EQUIPE A"
+div.style.backgroundColor = couleursEquipe[colorKey];
+div.style.color = "#fff";
+
+    // Affichage selon le créneau actuel
+    if (statutJour === currentSlot) {
+      gardeContainer.appendChild(div);
+    } else {
+      reposContainer.appendChild(div);
+    }
+  });
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+
+  if (id === 'synoptique-screen') {
+    vehiculesSelected = null;
+    document.getElementById('btn-ron').classList.remove('selected');
+    document.getElementById('btn-roc').classList.remove('selected');
+    document.getElementById('vehicules-container').innerHTML = '';
+  }
+
+  if (id === 'personnel-screen') {
+    afficherPersonnel();
+  }
+}
+
+    let vehiculesSelected = null;
+
+    function selectSite(site) {
+      vehiculesSelected = site;
+      document.getElementById('btn-ron').classList.toggle('selected', site === 'RON');
+      document.getElementById('btn-roc').classList.toggle('selected', site === 'ROC');
+      renderVehicules(site);
+    }
+
+    function renderVehicules(site) {
+      const container = document.getElementById('vehicules-container');
+      container.innerHTML = '';
+      const { path, vehicules } = data[site];
+
+      for (const cat in vehicules) {
+        const isCat07 = cat.startsWith('07');
+        // titre
+        const p = document.createElement('p');
+        p.className = 'categorie';
+        p.textContent = cat;
+        container.appendChild(p);
+        // boutons
+        const div = document.createElement('div');
+        div.className = 'button-container' + (isCat07? ' cat07':'');
+        vehicules[cat].forEach(nom => {
+          const btn = document.createElement('div');
+          btn.className = 'vehicule-btn';
+          btn.textContent = nom;
+          btn.dataset.ref = `${path}/${nom}`;
+          // Firebase follow
+          db.ref(btn.dataset.ref).on('value', snap => {
+            const s = parseInt(snap.val(), 10);
+            btn.classList.remove(...btn.classList);
+            btn.classList.add('vehicule-btn', `statut-${s}`);
+            if (isCat07 && s === 0) btn.classList.add('cat07');
+          });
+          div.appendChild(btn);
+        });
+        container.appendChild(div);
+      }
+    }
+
+    function openFiche18() {
+  const w = window.innerWidth > 600 ? 600 : window.innerWidth;
+  const h = window.innerHeight > 800 ? 800 : window.innerHeight;
+  const left = (screen.width - w) / 2;
+  const top = (screen.height - h) / 2;
+
+  const ficheWindow = window.open(
+    'fiche18.html',
+    'Fiche18',
+    `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`
+  );
+
+  if (!ficheWindow) {
+    alert("Veuillez autoriser les popups pour ouvrir la fiche.");
+  }
+
+}
+
+    document.getElementById('btn-ron').onclick = () => selectSite('RON');
+    document.getElementById('btn-roc').onclick = () => selectSite('ROC');
+  </script>
+</body>
+</html>
