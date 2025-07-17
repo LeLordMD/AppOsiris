@@ -97,6 +97,23 @@ button.main-btn.red-btn:hover {
       margin-top:20px; align-self:flex-start;
       background:none; border:none; color:#b41616; font-size:16px; cursor:pointer;
     }
+
+    .section-titre {
+  color: #999;
+  font-size: 14px;
+  text-transform: uppercase;
+  border-bottom: 1px solid #ccc;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  padding-bottom: 4px;
+}
+
+.nom-membre {
+  margin-left: 10px;
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+
   </style>
 </head>
 <body>
@@ -116,23 +133,26 @@ button.main-btn.red-btn:hover {
 
   <!-- Écran Synoptique -->
   <div id="synoptique-screen" class="screen">
+    <button class="back-btn" onclick="showScreen('home-screen')">← Retour</button>
     <h1 class="title">SIS ROUSSILLON - Synoptique des engins</h1>
     <div class="sub-buttons">
       <button id="btn-ron">RON</button>
       <button id="btn-roc">ROC</button>
     </div>
     <div id="vehicules-container"></div>
-    <button class="back-btn" onclick="showScreen('home-screen')">← Retour</button>
   </div>
 
   <!-- Écran Intervention -->
   <div id="intervention-screen" class="screen">
+    <button class="back-btn" onclick="showScreen('home-screen')">← Retour</button>
     <h1 class="title">Interventions en cours</h1>
     <p style="text-align:center; margin-top:30px; color:#666;">(à développer)</p>
     <button class="back-btn" onclick="showScreen('home-screen')">← Retour</button>
   </div>
 
+  <!-- Écran Personnel -->
   <div id="personnel-screen" class="screen">
+    <button class="back-btn" onclick="showScreen('home-screen')">← Retour</button>
   <h1 class="title">Personnel</h1>
 
   <div class="categorie">GARDE</div>
@@ -149,9 +169,17 @@ button.main-btn.red-btn:hover {
 
   <!-- Écran Fiche 18 -->
 <div id="fiche18-screen" class="screen">
+  <button class="back-btn" onclick="showScreen('home-screen')">← Retour</button>
   <h1 class="title">Fiche 18 – Intervention Numérique</h1>
   <iframe src="fiche18.html" style="width:100%; height:90vh; border:none;"></iframe>
-  <button class="back-btn" onclick="showScreen('home-screen')">← Retour</button>
+</div>
+
+<div id="equipe-detail-screen" class="screen">
+  <h1 id="equipe-detail-title" class="title" style="border-bottom: 2px solid #ccc; padding-bottom: 5px;"></h1>
+
+  <div id="equipe-detail-content"></div>
+
+  <button class="back-btn" onclick="showScreen('personnel-screen')">← Retour</button>
 </div>
 
 </body>
@@ -188,6 +216,47 @@ button.main-btn.red-btn:hover {
       }},
     };
 
+    const compositionEquipes = {
+  "EQUIPE A": {
+    couleur: "ROUGE",
+    AMQ: ["HMIDANI Abdelamane"],
+    TECH: ["BONNETON Jérome"],
+    EQ: ["MARCEAU Romain", "MAZABRARD Rémi", "XXX David", "XXX Jimmy", "+INTERIMAIRE", "+VACANT"]
+  },
+  "EQUIPE B": {
+    couleur: "BLEUE",
+    AMQ: ["BROYER Christophe"],
+    TECH: ["DEVAL Alexis"],
+    EQ: ["BONNAMY Patrick", "BUISSON Steve", "HAMEL Anthony", "PEYTAVIN Christophe", "+SAGNOL Maxime", "+INTERIMAIRE"]
+  },
+  "EQUIPE C": {
+    couleur: "VERTE",
+    AMQ: ["LEBOUTEILLER Johan"],
+    TECH: ["CECILLON Morgan"],
+    EQ: ["BOUTROIX Adrien", "GRIS Patrick", "RECORDEAU Axel", "Corentin", "RODRIGUEZ Emmanuel", "+INTERIMAIRE"]
+  },
+  "EQUIPE D": {
+    couleur: "JAUNE",
+    AMQ: ["CARRET Emmanuel"],
+    TECH: ["BRON Lionel"],
+    EQ: ["CALLET Sébastien", "GERARD Kévin", "ORJOLLET Patrice", "MOREIRA Anthonio", "SOTON Aurélien", "+INTERIMAIRE"]
+  },
+  "EQUIPE E": {
+    couleur: "ROSE",
+    AMQ: ["RUEL Sébastien"],
+    TECH: ["DESBOS Jean-François"],
+    EQ: ["ANDRE Alexandre", "DEWANCKER Mickaël", "GHINOZZI Fabien", "LETT Lionel", "ZANCAN David", "+INTERIMAIRE"]
+  }
+};
+
+const couleursEquipe = {
+  "ROUGE": "#e74c3c",
+  "BLEUE": "#3498db",
+  "VERTE": "#27ae60",
+  "JAUNE": "#f1c40f",
+  "ROSE": "#e91e63"
+};
+
 function afficherPersonnel() {
   const couleursEquipe = {
     "ROUGE": "#e74c3c",
@@ -218,6 +287,12 @@ function afficherPersonnel() {
   gardeContainer.innerHTML = '';
   reposContainer.innerHTML = '';
 
+  // Accès à la section "Prochaine Garde"
+  const prochaineCategorie = document.querySelectorAll('.categorie')[1];
+  prochaineCategorie.textContent = 'PROCHAINE GARDE';
+  const prochaineContainer = prochaineCategorie.nextElementSibling;
+  prochaineContainer.innerHTML = '';
+
   const maintenant = new Date();
   const heure = maintenant.getHours();
   const minutes = maintenant.getMinutes();
@@ -228,28 +303,49 @@ function afficherPersonnel() {
   // Référence : lundi 14 juillet 2025 (S1 pour ROSE)
   const referenceLundi = new Date("2025-07-14T00:00:00");
   const joursEcoules = Math.floor((maintenant - referenceLundi) / (1000 * 60 * 60 * 24));
-
   const jourSemaine = joursEcoules % 7; // 0 = lundi
   const semaineDepuisRef = Math.floor(joursEcoules / 7);
 
+  // Déterminer le créneau et jour du prochain service
+  const prochainSlot = currentSlot === "J" ? "N" : "J";
+  const prochainJour = (currentSlot === "J") ? jourSemaine : (jourSemaine + 1) % 7;
+  const prochaineSemaine = (currentSlot === "J" && prochainJour === 0) ? semaineDepuisRef + 1 : semaineDepuisRef;
+
   equipes.forEach(eq => {
     const semaineEquipe = (semaineDepuisRef + eq.decalageSemaine) % 5;
-    const statutJour = planningParSemaine[semaineEquipe][jourSemaine];
+    const statut = planningParSemaine[semaineEquipe][jourSemaine];
+
+    const label = eq.nom.split(" - ")[0]; // "EQUIPE A"
+    const colorKey = eq.nom.split(" - ")[1]; // "ROUGE"
 
     const div = document.createElement('div');
     div.className = 'vehicule-btn';
-    div.textContent = eq.nom;
+    div.textContent = label;
+    div.style.backgroundColor = couleursEquipe[colorKey];
+    div.style.color = "#fff";
+    div.onclick = () => afficherDetailEquipe(label);
 
-    const [label, colorKey] = eq.nom.split(" - ");
-div.textContent = label; // affiche juste "EQUIPE A"
-div.style.backgroundColor = couleursEquipe[colorKey];
-div.style.color = "#fff";
+    // DEBUG LOG
+    console.log(`${eq.nom} | Semaine: ${semaineEquipe + 1}, Jour: ${jourSemaine}, Statut: ${statut}, Slot actuel: ${currentSlot}`);
 
-    // Affichage selon le créneau actuel
-    if (statutJour === currentSlot) {
+    if (statut === currentSlot) {
       gardeContainer.appendChild(div);
-    } else {
+    } else if (statut === "R") {
       reposContainer.appendChild(div);
+    }
+
+    // Ajouter dans "PROCHAINE GARDE" si affecté au prochain créneau
+    const semaineEquipeProchaine = (prochaineSemaine + eq.decalageSemaine) % 5;
+    const prochainStatut = planningParSemaine[semaineEquipeProchaine][prochainJour];
+
+    if (prochainStatut === prochainSlot) {
+      const nextDiv = document.createElement('div');
+      nextDiv.className = 'vehicule-btn';
+      nextDiv.textContent = label;
+      nextDiv.style.backgroundColor = couleursEquipe[colorKey];
+      nextDiv.style.color = "#fff";
+      nextDiv.onclick = () => afficherDetailEquipe(label);
+      prochaineContainer.appendChild(nextDiv);
     }
   });
 }
@@ -328,6 +424,37 @@ function showScreen(id) {
     alert("Veuillez autoriser les popups pour ouvrir la fiche.");
   }
 
+}
+
+function afficherDetailEquipe(equipeLabel) {
+  const data = compositionEquipes[equipeLabel];
+  if (!data) return;
+
+  const fullTitle = `${equipeLabel} - ${data.couleur}`;
+  const title = document.getElementById("equipe-detail-title");
+  const content = document.getElementById("equipe-detail-content");
+
+  title.textContent = fullTitle;
+  title.style.backgroundColor = couleursEquipe[data.couleur];
+  title.style.color = "#fff";
+
+  content.innerHTML = "";
+
+  ["AMQ", "TECH", "EQ"].forEach(cat => {
+    const catTitre = document.createElement("div");
+    catTitre.className = "section-titre";
+    catTitre.textContent = cat;
+    content.appendChild(catTitre);
+
+    data[cat].forEach(nom => {
+      const p = document.createElement("div");
+      p.className = "nom-membre";
+      p.textContent = nom;
+      content.appendChild(p);
+    });
+  });
+
+  showScreen("equipe-detail-screen");
 }
 
     document.getElementById('btn-ron').onclick = () => selectSite('RON');
